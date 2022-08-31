@@ -10,9 +10,9 @@ def set_pr_title(new_name):
 current_title = sys.argv[1]  # "${{ github.event.pull_request.title }}"
 current_branch = sys.argv[2]  # "${{ github.head_ref }}"
 
-ticket_branch_re = re.compile(r'^(\w\w-\d+)/.+')
-fix_branch_re = re.compile(r'^fix/.+', flags=re.IGNORECASE)
-chore_branch_re = re.compile(r'^chore/.+', flags=re.IGNORECASE)
+ticket_branch_re = re.compile(r'^(\w\w-\d+(?:\+\w\w-\d+)*).+')
+fix_branch_re = re.compile(r'^fix.+', flags=re.IGNORECASE)
+chore_branch_re = re.compile(r'^chore.+', flags=re.IGNORECASE)
 
 fix_pr_re = re.compile(r'^HOTFIX \| .+')
 chore_pr_re = re.compile(r'^Chore \| .+')

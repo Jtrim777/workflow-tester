@@ -14,7 +14,7 @@ jobs:
         id: dolint
         run: python .github/scripts/verify_pr.py "${{ github.event.pull_request.title }}" "${{ github.head_ref }}"
       - name: Update PR Title
-        if: steps.dolint.outputs.new_title != ""
+        if: steps.dolint.outputs.new_title != ''
         uses: gr2m/create-or-update-pull-request-action@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

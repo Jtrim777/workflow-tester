@@ -10,10 +10,13 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v3
-      - name: Dump PR Data
-        run: echo "${{ github.event.pull_request.title }}"
-      - name: Verify or Edit PR Title
-        shell: python
-        run: |
-          import re, os, sys
-          current_title = ""
+      - name: Lint PR Title
+        id: dolint
+        run: python .github/scripts/verify_pr.py "${{ github.event.pull_request.title }}" "${{ github.head_ref }}"
+      - name: Update PR Title
+        if: $steps.dolint.outputs.new_title != ""
+        uses: gr2m/create-or-update-pull-request-action@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          title: ${{ steps.dolint.outputs.new_title }}

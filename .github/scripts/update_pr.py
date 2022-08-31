@@ -13,4 +13,8 @@ repo_path = sys.argv[2]
 pr_num = sys.argv[3]
 url = "https://api.github.com/repos/%s/pulls/%s" % (repo_path, pr_num)
 
-requests.patch(url, data=data, headers=headers)
+result = requests.patch(url, data=data, headers=headers)
+
+if result.status_code > 299 or result.status_code < 200:
+    print("\u001b[31mError %i: Failed to modify PR title: %s\u001b[0m" % (result.status_code, result.text))
+    sys.exit(1)

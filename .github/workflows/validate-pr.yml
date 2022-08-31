@@ -20,3 +20,5 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           title: ${{ steps.dolint.outputs.new_title }}
+          body: ${{ github.event.pull_request.body }}
+          update-pull-request-title-and-body: true

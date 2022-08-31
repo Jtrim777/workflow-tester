@@ -1,0 +1,19 @@
+name: Validate PR Title
+
+on:
+  pull_request:
+    types: [opened, reopened, edited, synchronize]
+
+jobs:
+  validate_pr:
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v3
+      - name: Dump PR Data
+        run: echo "${{ github.event.pull_request.title }}"
+      - name: Verify or Edit PR Title
+        shell: python
+        run: |
+          import re, os, sys
+          current_title = ""

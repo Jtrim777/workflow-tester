@@ -2,7 +2,7 @@ name: Validate PR Title
 
 on:
   pull_request:
-    types: [opened, reopened, edited, synchronize]
+    types: [opened, reopened, edited]
 
 jobs:
   validate_pr:
@@ -10,10 +10,14 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v3
-      - name: Dump PR Data
-        run: echo "${{ github.event.pull_request.title }}"
-      - name: Verify or Edit PR Title
-        shell: python
+      - name: Lint PR Title
+        id: dolint
+        run: python .github/scripts/lint_pr.py "${{ github.event.pull_request.title }}" "${{ github.head_ref }}"
+      - name: Update PR Title
+        if: steps.dolint.outputs.new_title != ''
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          import re, os, sys
-          current_title = ""
+          pip install requests
+          python .github/scripts/update_pr.py "${{steps.dolint.outputs.new_title}}" "${{ github.event.pull_request.base.repo.full_name }}" "${{ github.event.pull_request.number }}"
+            

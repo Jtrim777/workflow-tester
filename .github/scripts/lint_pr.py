@@ -3,6 +3,7 @@ import sys
 
 
 def set_pr_title(new_name):
+    """Exports the new PR title to GitHub Workflow's output detector"""
     print("::set-output name=new_title::"+new_name)
 
 

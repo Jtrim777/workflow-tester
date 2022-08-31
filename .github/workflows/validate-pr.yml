@@ -15,10 +15,13 @@ jobs:
         run: python .github/scripts/verify_pr.py "${{ github.event.pull_request.title }}" "${{ github.head_ref }}"
       - name: Update PR Title
         if: steps.dolint.outputs.new_title != ''
-        uses: gr2m/create-or-update-pull-request-action@v1
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          title: ${{ steps.dolint.outputs.new_title }}
-          body: ${{ github.event.pull_request.body }}
-          update-pull-request-title-and-body: true
+          RPATH: ${{ github.event.pull_request.base.repo.full_name }}
+          PRNUM: ${{ github.event.pull_request.number }}
+        run: |
+          curl \
+            -X PATCH \
+            -H "Accept: application/vnd.github+json" \ 
+            -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+            https://api.github.com/repos/$RPATH/pulls/$PRNUM \
+            -d '{"title":"${{ steps.dolint.outputs.new_title }}"}'

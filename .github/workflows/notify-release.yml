@@ -38,8 +38,8 @@ jobs:
       - name: Send Slack Message
         run: |
           CONVO=$(slack '!conversations.open' "{\"users\": \"${{ steps.fetch_slack.outputs.oncall_id }}\"}" | jq -rc '.channel.id')
-	  echo "Should use $CONVO, skipping for testing purposes"
-          
+          echo "Should use $CONVO, skipping for testing purposes"
+
           CONF=$(jq -nc --arg channel "D04762E5GG0" \
                        --arg template ".github/messages/approve_release.json" \
                        --arg target "${{ steps.fetch_cci.outputs.cci_url }}" \

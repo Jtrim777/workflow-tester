@@ -1,0 +1,72 @@
+#!/usr/bin/env python3
+
+import requests, os, sys, json
+
+CCI_API = "https://circleci.com/api/v2"
+CCI_TOKEN = os.getenv("CCI_TOKEN")
+
+
+def query(method, args=None):
+    if args is None:
+        args = {}
+    endpoint = CCI_API + '/' + method
+
+    headers = {"Circle-Token": CCI_TOKEN}
+
+    return requests.get(endpoint, headers=headers, params=args)
+
+
+def find_latest_prod():
+    pipeline = None
+    next_page = None
+    pipe_number = None
+
+    while not pipeline:
+        args = {'org-slug': "gh/metropolis-io"}
+        if next_page:
+            args['page-token'] = next_page
+        pipes_r = query("pipeline", args=args)
+        pipes_r.raise_for_status()
+        pipes = pipes_r.json()
+
+        next_page = pipes['next_page_token']
+        for pipe in pipes['items']:
+            if 'tag' in pipe['vcs']:
+                pipeline = pipe['id']
+                pipe_number = pipe['number']
+
+    work_r = query("pipeline/%s/workflow" % pipeline)
+    work_r.raise_for_status()
+    work = work_r.json()['items'][0]
+
+    return {'pipeline': pipe_number, 'workflow': work['id']}
+
+
+flows = {'prod_latest': find_latest_prod}
+
+if __name__ == '__main__':
+    method = sys.argv[1]
+    args = json.loads(sys.argv[2]) if len(sys.argv) > 2 else None
+
+    if method.startswith('!!'):
+        flow = flows[method[2:]]
+        response = flow(args)
+        print(json.dumps(response))
+    elif method.startswith('!'):
+        response = post(method[1:], args=args)
+        response.raise_for_status()
+        print(json.dumps(response.json()))
+    elif method.startswith('??'):
+        flow = flows[method[2:]]
+        response = flow()
+        print(json.dumps(response))
+    elif method.startswith('?'):
+        response = query(method[1:], args=args)
+        response.raise_for_status()
+        print(json.dumps(response.json()))
+    else:
+        response = query(method, args=args)
+        response.raise_for_status()
+        print(json.dumps(response.json()))
+
+

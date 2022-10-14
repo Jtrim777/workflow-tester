@@ -1,0 +1,36 @@
+{
+  "blocks": [
+    {
+      "type": "header",
+      "text": {
+        "type": "plain_text",
+        "text": "A Release Needs Your Approval",
+        "emoji": true
+      }
+    },
+    {
+      "type": "section",
+      "text": {
+        "type": "mrkdwn",
+        "text": "The latest `deploy_production` workflow is ready and needs to be approved to continue."
+      }
+    },
+    {
+      "type": "actions",
+      "elements": [
+        {
+          "type": "button",
+          "text": {
+            "type": "plain_text",
+            "text": "Go To CircleCI :rocket:",
+            "emoji": true
+          },
+          "url": "${TARGET}",
+          "value": "null",
+          "action_id": "actionId-0",
+          "style": "primary"
+        }
+      ]
+    }
+  ]
+}

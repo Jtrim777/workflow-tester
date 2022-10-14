@@ -1,0 +1,71 @@
+#!/usr/bin/env python3
+
+import requests, os, sys, json
+from string import Template
+
+SLACK_API = "https://slack.com/api"
+SLACK_TOKEN = os.getenv("SLACK_TOKEN")
+
+
+def query(method, args=None):
+    if args is None:
+        args = {}
+    endpoint = SLACK_API + '/' + method
+
+    headers = {"Authorization":"Bearer "+SLACK_TOKEN}
+
+    return requests.get(endpoint, headers=headers, params=args)
+
+
+def post(method, args=None):
+    if args is None:
+        args = {}
+    endpoint = SLACK_API + '/' + method
+
+    headers = {
+        "Authorization": "Bearer "+SLACK_TOKEN,
+        "Content-Type": "application/json"
+    }
+
+    return requests.post(endpoint, headers=headers, json=args)
+
+
+def send_template(args):
+    tmpl_file = args['template']
+    channel = args['channel']
+
+    with open(tmpl_file) as tfile:
+        tmpl = Template(tfile.read())
+
+    message = json.loads(tmpl.substitute({k.upper(): v for k, v in args.items()}))
+    message['channel'] = channel
+
+    return post('chat.postMessage', args=message).json()
+
+
+flows = {'send_template': send_template}
+
+if __name__ == '__main__':
+    method = sys.argv[1]
+    args = json.loads(sys.argv[2]) if len(sys.argv) > 2 else None
+
+    if method.startswith('!!'):
+        flow = flows[method[2:]]
+        response = flow(args)
+        print(json.dumps(response))
+    elif method.startswith('!'):
+        response = post(method[1:], args=args)
+        response.raise_for_status()
+        print(json.dumps(response.json()))
+    elif method.startswith('??'):
+        flow = flows[method[2:]]
+        response = flow()
+        print(json.dumps(response))
+    elif method.startswith('?'):
+        response = query(method[1:], args=args)
+        response.raise_for_status()
+        print(json.dumps(response.json()))
+    else:
+        response = query(method, args=args)
+        response.raise_for_status()
+        print(json.dumps(response.json()))

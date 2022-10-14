@@ -1,0 +1,55 @@
+#!/usr/bin/env python3
+
+import requests, os, sys, json
+
+PD_API = "https://api.pagerduty.com"
+PD_TOKEN = os.getenv("PAGERDUTY_TOKEN")
+
+
+def query(method, args=None):
+    if args is None:
+        args = {}
+    endpoint = PD_API + '/' + method
+
+    headers = {
+        "Authorization": "Token token="+PD_TOKEN,
+        "Accept": "application/vnd.pagerduty+json;version=2",
+        "Content-Type": "application/json"
+    }
+
+    return requests.get(endpoint, headers=headers, params=args)
+
+def whos_oncall():
+    args = {"escalation_policy_ids[]": ["PG7TVGA"], "schedule_ids[]": ["PSRPV06"]}
+    resp = query('oncalls', args=args)
+    resp.raise_for_status()
+
+    return resp.json()['oncalls'][0]['user']
+
+
+flows = {'whos_oncall': whos_oncall}
+
+if __name__ == '__main__':
+    method = sys.argv[1]
+    args = json.loads(sys.argv[2]) if len(sys.argv) > 2 else None
+
+    if method.startswith('!!'):
+        flow = flows[method[2:]]
+        response = flow(args)
+        print(json.dumps(response))
+    elif method.startswith('!'):
+        response = post(method[1:], args=args)
+        response.raise_for_status()
+        print(json.dumps(response.json()))
+    elif method.startswith('??'):
+        flow = flows[method[2:]]
+        response = flow()
+        print(json.dumps(response))
+    elif method.startswith('?'):
+        response = query(method[1:], args=args)
+        response.raise_for_status()
+        print(json.dumps(response.json()))
+    else:
+        response = query(method, args=args)
+        response.raise_for_status()
+        print(json.dumps(response.json()))

@@ -1,4 +1,27 @@
 #!/usr/bin/env python3
+"""
+Script to simplify interacting with the CircleCI API from Github Actions.
+
+Usage:
+circleci <mode><command> [args json]
+
+Modes:
+    Query: Commands prepended with '?' will be considered queries, and the command will be appended to the CircleCI API
+           URL and a GET request made with the args as query params.
+
+    Action: Commands prepended with '!' will be considered actions, and the command will be appended
+            to the CircleCI API URL and a POST request made with the args as json body parameters.
+
+    Query Flow: Commands prepended with '??' will be looked up as a flow from the flow dictionary. The function
+                specified should execute a GET request and take no parameters.
+
+    Action Flow: Commands prepended with '!!' will be looked up as a flow from the flow dictionary. The function
+                 specified should execute a POST request and take a json dict as an argument.
+
+Query Flows:
+    prod_latest: Searches through the most recent pipelines to find the last run on a release tag. Returns the
+                 pipeline number as well as the ID of the most recent workflow for that pipeline.
+"""
 
 import requests, os, sys, json
 
@@ -6,9 +29,7 @@ CCI_API = "https://circleci.com/api/v2"
 CCI_TOKEN = os.getenv("CCI_TOKEN")
 
 
-def query(method, args=None):
-    if args is None:
-        args = {}
+def query(method, args={}):
     endpoint = CCI_API + '/' + method
 
     headers = {"Circle-Token": CCI_TOKEN}
@@ -34,6 +55,7 @@ def find_latest_prod():
             if 'tag' in pipe['vcs']:
                 pipeline = pipe['id']
                 pipe_number = pipe['number']
+                break
 
     work_r = query("pipeline/%s/workflow" % pipeline)
     work_r.raise_for_status()

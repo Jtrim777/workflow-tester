@@ -1,4 +1,28 @@
 #!/usr/bin/env python3
+"""
+Script to simplify interacting with the Slack API from Github Actions.
+
+Usage:
+slack <mode><command> [args json]
+
+Modes:
+    Query: Commands prepended with '?' will be considered queries, and the command will be appended to the Slack API
+           URL and a GET request made with the args as query params.
+
+    Action: Commands prepended with '!' will be considered actions, and the command will be appended to the Slack API
+            URL and a POST request made with the args as json body parameters.
+
+    Query Flow: Commands prepended with '??' will be looked up as a flow from the flow dictionary. The function
+                specified should execute a GET request and take no parameters.
+
+    Action Flow: Commands prepended with '!!' will be looked up as a flow from the flow dictionary. The function
+                 specified should execute a POST request and take a json dict as an argument.
+
+Action Flows:
+    send_template: Using the message template specified by the argument field 'template', substitute the template
+                   with all variables in the argument dict, then send the message to the Slack channel at the field
+                   'channel'.
+"""
 
 import requests, os, sys, json
 from string import Template
@@ -7,9 +31,7 @@ SLACK_API = "https://slack.com/api"
 SLACK_TOKEN = os.getenv("SLACK_TOKEN")
 
 
-def query(method, args=None):
-    if args is None:
-        args = {}
+def query(method, args={}):
     endpoint = SLACK_API + '/' + method
 
     headers = {"Authorization":"Bearer "+SLACK_TOKEN}
@@ -17,9 +39,7 @@ def query(method, args=None):
     return requests.get(endpoint, headers=headers, params=args)
 
 
-def post(method, args=None):
-    if args is None:
-        args = {}
+def post(method, args={}):
     endpoint = SLACK_API + '/' + method
 
     headers = {

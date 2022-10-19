@@ -30,8 +30,9 @@ jobs:
           SLACK_TOKEN: ${{ secrets.slack_token }}
         run: |
           CONVO=$(slack '!!find_channel' '{"name": "system-changelog"}'| jq -r '.id')
+          echo "Convo=$CONVO"
 
-          CONF=$(jq -nc --arg channel "$CONVO" \
+          CONF=$(jq -nc --arg channel "D04762E5GG0" \
                        --arg template ".github/messages/approve_release.json" \
                        --arg git_tag "${{ env.GIT_TAG }}" \
                        --arg deploy_page "${{ steps.fetch_cci.outputs.cci_url }}" \

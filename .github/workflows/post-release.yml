@@ -1,0 +1,40 @@
+name: Post Release
+on: workflow_call
+
+jobs:
+  post_release:
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v2.2.0
+        with:
+          fetch-depth: 0
+      - name: Set env
+        run: echo "GIT_TAG=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
+      - name: Fetch Release Notes
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release view ${{ env.GIT_TAG }} --json name --json url --json body > relnotes.json
+          jq '.body' | python3 .github/scripts/format_release_notes.py
+      - name: Find CircleCI Workflow
+        id: fetch_cci
+        env:
+          CCI_TOKEN: ${{ secrets.cci_token }}
+        run: |
+          LATEST_PROD=$(circleci '??prod_latest')
+          PIPELINE=$(echo "$LATEST_PROD" | jq -rc '.pipeline')
+          WORKFLOW=$(echo "$LATEST_PROD" | jq -rc '.workflow')
+          echo "cci_url=https://app.circleci.com/pipelines/github/metropolis-io/site/$PIPELINE/workflows/$WORKFLOW" >> $GITHUB_OUTPUT
+      - name: Post Release Notes
+        env:
+          SLACK_TOKEN: ${{ secrets.slack_token }}
+        run: |
+          CONVO=$(slack '!!find_channel' '{"name": "system-changelog"}'| jq -r '.id')
+
+          CONF=$(jq -nc --arg channel "$CONVO" \
+                       --arg template ".github/messages/approve_release.json" \
+                       --arg git_tag "${{ env.GIT_TAG }}" \
+                       --arg deploy_page "${{ steps.fetch_cci.outputs.cci_url }}" \
+                       --arg release_page "$(jq -r '.url' relnotes.json)" \
+                       '$ARGS.named')
+          slack '!!send_template' "$CONF"
